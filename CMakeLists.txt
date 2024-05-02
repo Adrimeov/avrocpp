@@ -75,20 +75,18 @@ endif ()
 endif ()
 
 
-find_package (Boost 1.38 REQUIRED
+find_package (Boost REQUIRED
     COMPONENTS filesystem iostreams program_options regex system)
 
 include(FetchContent)
-FetchContent_Declare(
-        fmt
-        GIT_REPOSITORY  https://github.com/fmtlib/fmt.git
-        GIT_TAG         10.2.1
-        GIT_PROGRESS    TRUE
-        USES_TERMINAL_DOWNLOAD TRUE
-)
-FetchContent_MakeAvailable(fmt)
-
 find_package(Snappy)
+
+if (Boost_FOUND)
+    message("Boost found: ${Boost_LIBRARIES} ${Boost_INCLUDE_DIRS}" )
+else (Boost_FOUND)
+    message(FATAL_ERROR "Boost not found.")
+endif (Boost_FOUND)
+
 if (SNAPPY_FOUND)
     set(SNAPPY_PKG libsnappy)
     add_definitions(-DSNAPPY_CODEC_AVAILABLE)
@@ -142,12 +140,15 @@ set_target_properties (avrocpp PROPERTIES
 set_target_properties (avrocpp_s PROPERTIES
     VERSION ${AVRO_VERSION_MAJOR}.${AVRO_VERSION_MINOR}.${AVRO_VERSION_PATCH})
 
-target_link_libraries (avrocpp ${Boost_LIBRARIES} ${SNAPPY_LIBRARIES} fmt::fmt-header-only)
+target_include_directories(avrocpp
+        INTERFACE
+        ${CMAKE_CURRENT_SOURCE_DIR})
+target_link_libraries (avrocpp Boost::headers Boost::iostreams Boost::filesystem ${Boost_LIBRARIES} ${SNAPPY_LIBRARIES} fmt::fmt-header-only)
 target_include_directories(avrocpp PRIVATE ${SNAPPY_INCLUDE_DIR})
 
 add_executable (precompile test/precompile.cc)
 
-target_link_libraries (precompile avrocpp_s ${Boost_LIBRARIES} ${SNAPPY_LIBRARIES})
+target_link_libraries (precompile avrocpp_s Boost::headers ${Boost_LIBRARIES} ${SNAPPY_LIBRARIES})
 
 macro (gen file ns)
     add_custom_command (OUTPUT ${file}.hh
@@ -177,7 +178,7 @@ gen (primitivetypes pt)
 gen (cpp_reserved_words cppres)
 
 add_executable (avrogencpp impl/avrogencpp.cc)
-target_link_libraries (avrogencpp avrocpp_s ${Boost_LIBRARIES} ${SNAPPY_LIBRARIES})
+target_link_libraries (avrogencpp avrocpp_s Boost::headers Boost::program_options ${Boost_LIBRARIES} ${SNAPPY_LIBRARIES})
 
 enable_testing()
 
@@ -216,7 +217,7 @@ set (CPACK_PACKAGE_FILE_NAME "avrocpp-${AVRO_VERSION_MAJOR}")
 
 include (CPack)
 
-install (TARGETS avrocpp avrocpp_s
+install (TARGETS avrocpp
     LIBRARY DESTINATION lib
     ARCHIVE DESTINATION lib
     RUNTIME DESTINATION lib)
