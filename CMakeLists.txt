@@ -143,7 +143,7 @@ set_target_properties (avrocpp_s PROPERTIES
 target_include_directories(avrocpp
         INTERFACE
         ${CMAKE_CURRENT_SOURCE_DIR})
-target_link_libraries (avrocpp Boost::headers Boost::iostreams Boost::filesystem ${Boost_LIBRARIES} ${SNAPPY_LIBRARIES} fmt::fmt-header-only)
+target_link_libraries (avrocpp Boost::headers Boost::iostreams Boost::filesystem Boost::algorithm ${Boost_LIBRARIES} ${SNAPPY_LIBRARIES} fmt::fmt-header-only)
 target_include_directories(avrocpp PRIVATE ${SNAPPY_INCLUDE_DIR})
 
 add_executable (precompile test/precompile.cc)
